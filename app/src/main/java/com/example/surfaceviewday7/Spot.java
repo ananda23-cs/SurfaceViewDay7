@@ -16,7 +16,7 @@ public class Spot {
         cx = x;
         cy = y;
 
-        radius = 20.0f;
+        radius = 60.0f;
         color = new Paint();
         int tmp = Color.rgb((int)(Math.random()*255), (int)(Math.random()*255), (int)(Math.random()*255));
         color.setColor(tmp);
