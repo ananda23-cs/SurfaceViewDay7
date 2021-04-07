@@ -14,10 +14,14 @@ import android.widget.SeekBar;
 
 import java.util.ArrayList;
 
-public class MySurfaceView extends SurfaceView implements SeekBar.OnSeekBarChangeListener, View.OnTouchListener, View.OnClickListener {
+import static java.lang.Thread.sleep;
+
+public class MySurfaceView extends SurfaceView implements SeekBar.OnSeekBarChangeListener,
+                            View.OnTouchListener, View.OnClickListener, Runnable {
     private float radius;
     private ArrayList<Spot> spots;
     private int greenClicks, imageClicks;
+    private boolean ANIMATE = false;
 
     public MySurfaceView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -33,6 +37,7 @@ public class MySurfaceView extends SurfaceView implements SeekBar.OnSeekBarChang
 
         greenClicks = 0;
         imageClicks = 0;
+        ANIMATE = true;
     }
 
     protected void onDraw(Canvas canvas){
@@ -55,8 +60,12 @@ public class MySurfaceView extends SurfaceView implements SeekBar.OnSeekBarChang
         canvas.drawCircle(100.0f, 100.0f, radius, red);
 
         //draw each spot from spots
-        for(Spot spot: spots) {
-            spot.draw(canvas);
+        //Since I could be updating colors while trying to draw,
+        //I need to synchronize
+        synchronized (spots) {
+            for (Spot spot : spots) {
+                spot.draw(canvas);
+            }
         }
     }
 
@@ -81,7 +90,9 @@ public class MySurfaceView extends SurfaceView implements SeekBar.OnSeekBarChang
             //Create a spot
             Spot newSpot = new Spot(x, y);
             //Add a spot to the array list
-            spots.add(newSpot);
+            synchronized (spots) {
+                spots.add(newSpot);
+            }
             //Let myself know that I should draw the new input
             invalidate();
         }
@@ -100,4 +111,29 @@ public class MySurfaceView extends SurfaceView implements SeekBar.OnSeekBarChang
             invalidate();
         }
     }
-}
+
+    @Override
+    public void run() {
+        //This is the threaded code that can run separately
+
+        //Want to do, is change the color for every 2 seconds or so
+        while(ANIMATE){
+            //1. Sleep for a little bit
+            try {
+                sleep(200);
+            } catch (InterruptedException e) {
+                //e.printStackTrace();
+                ANIMATE = false;
+            }
+            //2 change the spots' colors
+            synchronized (spots) {
+                for (Spot spot : spots) {
+                    spot.randomizeColor();
+                }
+            }
+
+            //3. let the surface view know that it should draw itself soon
+            invalidate();
+        }
+    }//run
+}//MySurfaceView

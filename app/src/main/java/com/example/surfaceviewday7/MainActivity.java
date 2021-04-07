@@ -29,5 +29,9 @@ public class MainActivity extends AppCompatActivity {
         Button imageShow = (Button) findViewById(R.id.imageShow);
         imageShow.setBackgroundColor(Color.GREEN);
         imageShow.setOnClickListener(theView);
+
+        Thread animationThread = new Thread(theView);
+        animationThread.start();    //Actually starts the thread
+
     }
 }
